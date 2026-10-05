@@ -7,9 +7,9 @@ const OverviewMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full overflow-hidden">
-        <div className="flex h-[180px] w-full items-center justify-center rounded-xl bg-slate-100">
-          <div className="text-sm text-slate-400">
+      <div className="h-full w-full">
+        <div className="flex h-full w-full items-center justify-center bg-slate-100">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
             Loading infrastructure map...
           </div>
         </div>
@@ -28,18 +28,41 @@ export interface MapAsset {
   locationName: string | null;
   conditionScore: number | null;
   riskScore: number | null;
+  riskLevel: string | null;
+}
+
+export interface MapReport {
+  id: string;
+  reportCode: string;
+  title: string;
+  description: string;
+  type: string;
+  riskLevel: string | null;
+  riskScore: number | null;
+  status: string;
+  department: string;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  assetId: string | null;
+  createdAt: string;
 }
 
 interface OverviewMapWrapperProps {
   assets: MapAsset[];
+  reports: MapReport[];
 }
 
 export default function OverviewMapWrapper({
   assets,
+  reports,
 }: OverviewMapWrapperProps) {
   return (
-    <div className="w-full">
-      <OverviewMap assets={assets} />
+    <div className="h-full w-full">
+      <OverviewMap
+        assets={assets}
+        reports={reports}
+      />
     </div>
   );
 }

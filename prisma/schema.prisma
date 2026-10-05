@@ -7,35 +7,196 @@ datasource db {
 }
 
 model User {
-  id            String              @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?             @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  accounts      Account[]
-  complaints    Complaint[]         @relation("ComplaintReporter")
-  inspections   Inspection[]        @relation("InspectionInspector")
-  maintenance   MaintenanceRecord[] @relation("MaintenanceWorker")
-  predictions   Prediction[]        @relation("PredictionCreator")
-  sessions      Session[]
+  role          String    @default("USER")
+
+  reports  Report[]
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InfrastructureAsset {
+  id           String    @id @default(cuid())
+  assetCode    String    @unique
+  name         String
+  type         AssetType
+  description  String?
+  locationName String?
+  city         String?
+  district     String?
+  state        String?
+  latitude     Float
+  longitude    Float
+  status       String?
+
+  installationDate        DateTime?
+  installationYear        Int?
+  expectedMaintenanceYear Int?
+  currentYear             Int?
+
+  ageYears       Float?
+  conditionScore Float?
+  riskScore      Float?
+  riskLevel      RiskLevel?
+  totalReports   Int        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports            Report[]
+  riskAnalyses       RiskAnalysis[]
+  maintenanceRecords MaintenanceRecord[]
+  officialProjects   OfficialProject[]
+
+  @@index([type])
+  @@index([latitude, longitude])
+  @@index([riskScore])
+  @@index([riskLevel])
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  reportCode  String    @unique
+  title       String
+  description String
+  type        AssetType
+
+  status     ReportStatus @default(OPEN)
+  source     ReportSource @default(CITIZEN)
+  department String
+
+  latitude  Float
+  longitude Float
+  address   String?
+  imageUrl  String?
+
+  installationYear        Int?
+  expectedMaintenanceYear Int?
+  currentYear             Int?
+
+  assetId String?
+  userId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  asset        InfrastructureAsset? @relation(fields: [assetId], references: [id])
+  user         User?                @relation(fields: [userId], references: [id])
+  riskAnalyses RiskAnalysis[]
+
+  @@index([assetId])
+  @@index([type])
+  @@index([department])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RiskAnalysis {
+  id       String  @id @default(cuid())
+  assetId  String
+  reportId String?
+
+  riskScore Float
+  riskLevel RiskLevel
+
+  explanation String?
+  model       String?
+
+  analyzedAt DateTime @default(now())
+
+  asset  InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  report Report?             @relation(fields: [reportId], references: [id])
+
+  @@index([assetId])
+  @@index([reportId])
+  @@index([riskScore])
+}
+
+model MaintenanceRecord {
+  id String @id @default(cuid())
+
+  assetId String
+  asset   InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  maintenanceType String
+  description     String?
+
+  performedAt DateTime
+  completedAt DateTime?
+
+  status String?
+
+  contractor String?
+  cost       Float?
+
+  source    String?
+  sourceUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([assetId])
+  @@index([performedAt])
+}
+
+model OfficialProject {
+  id String @id @default(cuid())
+
+  projectCode String
+  title       String
+
+  assetType AssetType @default(ROAD)
+
+  projectDate DateTime?
+
+  amount          Float?
+  agreementAmount Float?
+
+  physicalProgress  Float?
+  financialProgress Float?
+
+  scheduledDate DateTime?
+
+  contractor String?
+
+  department String?
+  source     String?
+  sourceUrl  String?
+
+  matchedAssetId String?
+  matchedAsset   InfrastructureAsset? @relation(fields: [matchedAssetId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectCode, title])
+  @@index([assetType])
+  @@index([projectDate])
+  @@index([matchedAssetId])
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refresh_token String?
+  access_token  String?
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String?
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -46,7 +207,8 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -59,252 +221,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model InfrastructureAsset {
-  id                  String              @id @default(cuid())
-  assetCode           String              @unique
-  name                String
-  type                AssetType
-  status              AssetStatus         @default(ACTIVE)
-  description         String?
-  latitude            Float?
-  longitude           Float?
-  locationName        String?
-  city                String?
-  district            String?
-  state               String?
-  installationDate    DateTime?
-  ageYears            Float?
-  conditionScore      Float?
-  riskScore           Float?
-  trafficLevel        TrafficLevel?
-  criticality         Criticality         @default(MEDIUM)
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  enrichmentSource    String?
-  enrichmentSummary   String?
-  enrichmentUpdatedAt DateTime?
-  complaints          Complaint[]
-  environmentalData   EnvironmentalData[]
-  inspections         Inspection[]
-  maintenance         MaintenanceRecord[]
-  predictions         Prediction[]
-  trafficData         TrafficData[]
-
-  @@index([type])
-  @@index([status])
-  @@index([city])
-  @@index([district])
-  @@index([riskScore])
-  @@index([criticality])
-}
-
-model Inspection {
-  id             String              @id @default(cuid())
-  assetId        String
-  inspectorId    String?
-  inspectionDate DateTime            @default(now())
-  result         InspectionResult
-  conditionScore Float?
-  notes          String?
-  imageUrl       String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  asset          InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  inspector      User?               @relation("InspectionInspector", fields: [inspectorId], references: [id])
-
-  @@index([assetId])
-  @@index([inspectorId])
-  @@index([inspectionDate])
-  @@index([result])
-}
-
-model Complaint {
-  id           String               @id @default(cuid())
-  assetId      String?
-  reportedBy   String?
-  category     ComplaintCategory
-  severity     Severity             @default(MEDIUM)
-  status       ComplaintStatus      @default(OPEN)
-  title        String
-  description  String?
-  latitude     Float?
-  longitude    Float?
-  locationName String?
-  reportedAt   DateTime             @default(now())
-  resolvedAt   DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  asset        InfrastructureAsset? @relation(fields: [assetId], references: [id])
-  reporter     User?                @relation("ComplaintReporter", fields: [reportedBy], references: [id])
-
-  @@index([assetId])
-  @@index([reportedBy])
-  @@index([category])
-  @@index([severity])
-  @@index([status])
-  @@index([reportedAt])
-}
-
-model MaintenanceRecord {
-  id            String              @id @default(cuid())
-  assetId       String
-  performedBy   String?
-  type          MaintenanceType
-  status        MaintenanceStatus   @default(SCHEDULED)
-  title         String
-  description   String?
-  scheduledDate DateTime?
-  startedAt     DateTime?
-  completedAt   DateTime?
-  cost          Float?
-  contractor    String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  asset         InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  worker        User?               @relation("MaintenanceWorker", fields: [performedBy], references: [id])
-
-  @@index([assetId])
-  @@index([performedBy])
-  @@index([type])
-  @@index([status])
-  @@index([scheduledDate])
-}
-
-model EnvironmentalData {
-  id               String              @id @default(cuid())
-  assetId          String
-  recordedAt       DateTime            @default(now())
-  temperature      Float?
-  rainfall         Float?
-  humidity         Float?
-  windSpeed        Float?
-  floodRisk        Float?
-  pollutionLevel   Float?
-  weatherCondition String?
-  createdAt        DateTime            @default(now())
-  asset            InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId])
-  @@index([recordedAt])
-}
-
-model TrafficData {
-  id                     String              @id @default(cuid())
-  assetId                String
-  recordedAt             DateTime            @default(now())
-  vehicleCount           Int?
-  averageSpeed           Float?
-  congestionLevel        TrafficLevel?
-  heavyVehiclePercentage Float?
-  createdAt              DateTime            @default(now())
-  asset                  InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId])
-  @@index([recordedAt])
-}
-
-model Prediction {
-  id                   String              @id @default(cuid())
-  assetId              String
-  createdBy            String?
-  predictedAt          DateTime            @default(now())
-  riskScore            Float
-  riskLevel            RiskLevel
-  failureProbability   Float?
-  predictedFailureDate DateTime?
-  modelName            String?
-  modelVersion         String?
-  explanation          String?
-  recommendedAction    String?
-  createdAt            DateTime            @default(now())
-  asset                InfrastructureAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  creator              User?               @relation("PredictionCreator", fields: [createdBy], references: [id])
-
-  @@index([assetId])
-  @@index([createdBy])
-  @@index([predictedAt])
-  @@index([riskLevel])
-  @@index([riskScore])
-}
-
 enum AssetType {
   ROAD
   BRIDGE
-  STREETLIGHT
   DRAINAGE
-  PUBLIC_BUILDING
-  WATER_SYSTEM
-  OTHER
-  PUBLIC_INFRASTRUCTURE
-}
-
-enum AssetStatus {
-  ACTIVE
-  UNDER_MAINTENANCE
-  DAMAGED
-  OUT_OF_SERVICE
-  RETIRED
-}
-
-enum TrafficLevel {
-  LOW
-  MEDIUM
-  HIGH
-  VERY_HIGH
-}
-
-enum Criticality {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum InspectionResult {
-  GOOD
-  FAIR
-  POOR
-  CRITICAL
-}
-
-enum ComplaintCategory {
-  ROAD_DAMAGE
-  POTHOLE
   STREETLIGHT
-  DRAINAGE
-  WATER
-  BRIDGE
-  BUILDING
-  OTHER
 }
 
-enum Severity {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum ComplaintStatus {
+enum ReportStatus {
   OPEN
+  UNDER_REVIEW
   IN_PROGRESS
   RESOLVED
-  CLOSED
   REJECTED
-}
-
-enum MaintenanceType {
-  PREVENTIVE
-  CORRECTIVE
-  EMERGENCY
-  INSPECTION
-}
-
-enum MaintenanceStatus {
-  SCHEDULED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
 }
 
 enum RiskLevel {
@@ -312,4 +241,22 @@ enum RiskLevel {
   MEDIUM
   HIGH
   CRITICAL
+}
+
+enum ReportSource {
+  CITIZEN
+  DEPARTMENT
+  INSPECTION
+  SYSTEM
+}
+model ReportDeletion {
+  id         String   @id @default(cuid())
+  reportCode String
+  title      String
+  reason     String
+  deletedAt  DateTime @default(now())
+  deletedBy  String?
+
+  @@index([reportCode])
+  @@index([deletedAt])
 }

@@ -40,10 +40,10 @@ const steps = [
 
 // TODO: replace names, roles and photo paths (put images in /public/team/)
 const team = [
-  { name: "Ankit Pandey", role: "Full stack Developer", photo: "/team/member1.jpg" },
-  { name: "Abhijeet Anand", role: "Backend Developer", photo: "/team/member2.jpg" },
-  { name: "Sakshi Sharma", role: "UI/UX Designer", photo: "/sakshi.jpg" },
-  { name: "Riya kumari", role: "UI/UX Designer", photo: "/riya.jpg" },
+  { name: "Ankit Pandey", role: "Full Stack Developer", photo: "/team/ankit.jpeg" },
+  { name: "Abhijeet Anand", role: "Backend Developer", photo: "/team/abhijeet.jpeg" },
+  { name: "Sakshi Sharma", role: "UI/UX Designer", photo: "/team/sakshi.jpeg" },
+  { name: "Riya kumari", role: "UI/UX Designer", photo: "/team/riya.jpeg" },
 ];
 
 function scrollToId(id: string) {

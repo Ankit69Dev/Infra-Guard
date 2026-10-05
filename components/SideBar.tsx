@@ -20,23 +20,21 @@ import {
   TrendingUp,
   TriangleAlert,
   Wrench,
+  FileWarning,
   type LucideIcon,
 } from "lucide-react";
 
 /* Put your logo at /public/logo.png (square, ~64x64 or larger) */
-const LOGO_SRC = "/logo.png";
+const LOGO_SRC = "/logo.jpeg";
 
 type NavItem = { name: string; href: string; icon: LucideIcon };
 
 const mainItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Reports", href: "/dashboard/reports", icon: FileWarning },
   { name: "Infrastructure Map", href: "/dashboard/map", icon: Map },
   { name: "Assets", href: "/dashboard/assets", icon: Building2 },
   { name: "Risk Intelligence", href: "/dashboard/risk", icon: TriangleAlert },
-  { name: "Predictions", href: "/dashboard/predictions", icon: TrendingUp },
-  { name: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
-  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquareWarning },
-  { name: "Inspections", href: "/dashboard/inspections", icon: ClipboardCheck },
   { name: "AI Insights", href: "/dashboard/ai-insights", icon: Sparkles },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
@@ -145,7 +143,7 @@ export default function Sidebar({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={LOGO_SRC}
-            alt="Infra Build"
+            alt="Infra Guard Logo"
             width={36}
             height={36}
             onError={() => setLogoFailed(true)}
@@ -156,7 +154,7 @@ export default function Sidebar({
         {!collapsed && (
           <div className="leading-none">
             <div className="text-[19px] font-semibold tracking-tight">
-              Infra Build
+              Infra Guard
             </div>
             <div className="mt-1.5 text-[11px] font-medium text-zinc-500">
               Infrastructure Intelligence
